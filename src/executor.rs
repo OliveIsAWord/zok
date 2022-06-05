@@ -42,10 +42,29 @@ impl fmt::Display for Value {
 
 fn to_float(s: Scalar) -> f64 {
     match s {
-        // The precision loss is an intended feature. The ramifications are passed on to the end user.
-        #[allow(clippy::cast_precision_loss)]
-        Scalar::Int(x) => x as f64,
+        Scalar::Int(i) => int_to_float(i),
         Scalar::Float(f) => f,
+    }
+}
+
+/// A type safe way of converting the Zok int type to the Zok float type
+/// The precision loss is an intended feature; the ramifications are passed on to the end user.
+#[allow(clippy::cast_precision_loss)]
+fn int_to_float(x: i64) -> f64 {
+    x as f64
+}
+
+fn scalar_op<F, G>(f_int: F, f_float: G) -> impl Fn(Scalar, Scalar) -> Scalar
+where
+    F: Fn(i64, i64) -> i64,
+    G: Fn(f64, f64) -> f64,
+{
+    use Scalar::{Float, Int};
+    move |x, y| match (x, y) {
+        (Int(a), Int(b)) => Int(f_int(a, b)),
+        (Int(a), Float(b)) => Float(f_float(int_to_float(a), b)),
+        (Float(a), Int(b)) => Float(f_float(a, int_to_float(b))),
+        (Float(a), Float(b)) => Float(f_float(a, b)),
     }
 }
 
@@ -53,9 +72,39 @@ use std::ops;
 impl ops::Add<Self> for Scalar {
     type Output = Self;
     fn add(self, rhs: Self) -> Self {
-        match (self, rhs) {
-            (Scalar::Int(x), Scalar::Int(y)) => Scalar::Int(x.wrapping_add(y)),
-            (a, b) => Scalar::Float(to_float(a) + to_float(b)),
+        scalar_op(i64::wrapping_add, f64::add)(self, rhs)
+    }
+}
+impl ops::Sub<Self> for Scalar {
+    type Output = Self;
+    fn sub(self, rhs: Self) -> Self {
+        scalar_op(i64::wrapping_sub, f64::sub)(self, rhs)
+    }
+}
+impl ops::Mul<Self> for Scalar {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self {
+        scalar_op(i64::wrapping_mul, f64::mul)(self, rhs)
+    }
+}
+impl ops::Div<Self> for Scalar {
+    type Output = Self;
+    fn div(self, mut rhs: Self) -> Self {
+        use Scalar::{Float, Int};
+        if matches!(rhs, Int(0)) {
+            // use floating point rules for zero division
+            rhs = Float(0.0);
+        }
+        scalar_op(i64::wrapping_div, f64::div)(self, rhs)
+    }
+}
+impl ops::Neg for Scalar {
+    type Output = Self;
+    fn neg(self) -> Self {
+        use Scalar::{Float, Int};
+        match self {
+            Int(i) => Int(i.wrapping_neg()),
+            Float(f) => Float(f.neg()),
         }
     }
 }
@@ -87,44 +136,42 @@ pub fn evaluate(ast: &Ast) -> EvalResult {
 fn evaluate_monad(op: Operator, val: Value) -> EvalResult {
     match op {
         Operator::Plus => todo!("transpose operation"),
-        Operator::Minus => atomic_monad(
-            |x| match x {
-                Scalar::Int(i) => Scalar::Int(i.wrapping_neg()),
-                Scalar::Float(f) => Scalar::Float(-f),
-            },
-            val,
-        ),
+        Operator::Minus => atomic_monad(|x| -x)(val),
+        Operator::Times => todo!("extract first"),
+        Operator::ForwardSlash => atomic_monad(|x| Scalar::Float(to_float(x).sqrt()))(val),
     }
 }
 
 fn evaluate_dyad(op: Operator, val1: Value, val2: Value) -> EvalResult {
     match op {
-        Operator::Plus => atomic_dyad(|x, y| x + y, val1, val2),
-        Operator::Minus => todo!("subtraction"),
+        Operator::Plus => atomic_dyad(|x, y| x + y)(val1, val2),
+        Operator::Minus => atomic_dyad(|x, y| x - y)(val1, val2),
+        Operator::Times => atomic_dyad(|x, y| x * y)(val1, val2),
+        Operator::ForwardSlash => atomic_dyad(|x, y| x / y)(val1, val2),
     }
 }
 
-fn atomic_monad<F>(f: F, val: Value) -> EvalResult
+fn atomic_monad<F>(f: F) -> impl Fn(Value) -> EvalResult
 where
     F: Fn(Scalar) -> Scalar + Copy,
 {
     use Value::{Array, Num};
-    match val {
+    move |val| match val {
         Num(a) => Ok(Num(f(a))),
         Array(xs) => xs
             .into_iter()
-            .map(|a| atomic_monad(f, a))
+            .map(atomic_monad(f))
             .collect::<Result<_, _>>()
             .map(Array),
     }
 }
 
-fn atomic_dyad<F>(f: F, val1: Value, val2: Value) -> EvalResult
+fn atomic_dyad<F>(f: F) -> impl Fn(Value, Value) -> EvalResult
 where
     F: Fn(Scalar, Scalar) -> Scalar + Copy,
 {
     use Value::{Array, Num};
-    match (val1, val2) {
+    move |val1, val2| match (val1, val2) {
         (Num(a), Num(b)) => Ok(Num(f(a, b))),
         (Array(xs), Array(ys)) => {
             if xs.len() != ys.len() {
@@ -132,28 +179,19 @@ where
             }
             xs.into_iter()
                 .zip(ys.into_iter())
-                .map(|(a, b)| atomic_dyad(f, a, b))
+                .map(|(a, b)| atomic_dyad(f)(a, b))
                 .collect::<Result<_, _>>()
                 .map(Array)
         }
         (Num(a), Array(ys)) => ys
             .into_iter()
-            .map(|b| atomic_dyad(f, Num(a), b))
+            .map(|b| atomic_dyad(f)(Num(a), b))
             .collect::<Result<_, _>>()
             .map(Array),
         (Array(xs), Num(b)) => xs
             .into_iter()
-            .map(|a| atomic_dyad(f, a, Num(b)))
+            .map(|a| atomic_dyad(f)(a, Num(b)))
             .collect::<Result<_, _>>()
             .map(Array),
     }
 }
-
-// (Array(xs), Num(b)) => Array(xs.iter().map(|a| Num(func(a, b))).collect()),
-// (Num(a), Array(ys)) => Array(ys.iter().map(|b| Num(func(a, b))).collect()),
-// (Array(xs), Array(ys)) => {
-//     if xs.len() != ys.len() {
-//         return Err(EvalError);
-//     }
-//     Array(xs.iter().zip(&ys).map(|(a, b)| Num(func(a, b))).collect())
-// }

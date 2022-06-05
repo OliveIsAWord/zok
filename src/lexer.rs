@@ -28,9 +28,11 @@ impl fmt::Debug for Scalar {
 pub enum Operator {
     Plus,
     Minus,
+    Times,
+    ForwardSlash,
 }
 
-const OP_CHARS: &[(char, Operator)] = &[('+', Operator::Plus), ('-', Operator::Minus)];
+const OP_CHARS: &[(char, Operator)] = &[('+', Operator::Plus), ('-', Operator::Minus), ('*', Operator::Times), ('/', Operator::ForwardSlash)];
 
 #[derive(Debug)]
 pub struct ParseOperatorError;
