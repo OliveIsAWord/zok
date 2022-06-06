@@ -27,6 +27,17 @@ pub enum ParseError {
     ExtraClosingBrace,
 }
 
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::ExpectedToken => "unclosed parenthesis",
+            Self::ExtraClosingBrace => "extra closed parenthesis",
+        };
+        write!(f, "{}", s)
+    }
+}
+impl std::error::Error for ParseError {}
+
 pub fn parse_expr(tokens: &[Token], unwrap_single: bool) -> Result<Ast, ParseError> {
     let mut array: Vec<Ast> = vec![];
     let mut iter = iter_with_rest(tokens);

@@ -32,7 +32,12 @@ pub enum Operator {
     ForwardSlash,
 }
 
-const OP_CHARS: &[(char, Operator)] = &[('+', Operator::Plus), ('-', Operator::Minus), ('*', Operator::Times), ('/', Operator::ForwardSlash)];
+const OP_CHARS: &[(char, Operator)] = &[
+    ('+', Operator::Plus),
+    ('-', Operator::Minus),
+    ('*', Operator::Times),
+    ('/', Operator::ForwardSlash),
+];
 
 #[derive(Debug)]
 pub struct ParseOperatorError;
@@ -65,6 +70,13 @@ impl fmt::Debug for Operator {
 // }
 #[derive(Debug)]
 pub struct LexError;
+
+impl fmt::Display for LexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "error while lexing")
+    }
+}
+impl std::error::Error for LexError {}
 
 pub fn lex(mut src: &str) -> Result<Vec<Token>, LexError> {
     let lexers = [lex_open_paren, lex_close_paren, lex_operator, lex_num];

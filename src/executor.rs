@@ -111,6 +111,12 @@ impl ops::Neg for Scalar {
 
 #[derive(Debug)]
 pub struct EvalError;
+impl fmt::Display for EvalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "eval error lol")
+    }
+}
+impl std::error::Error for EvalError {}
 pub type EvalResult = Result<Value, EvalError>;
 
 pub fn evaluate(ast: &Ast) -> EvalResult {
