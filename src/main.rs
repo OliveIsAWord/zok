@@ -5,9 +5,10 @@ mod executor;
 mod lexer;
 mod parser;
 
-use executor::evaluate;
+use executor::{evaluate, Value};
 use lexer::lex;
 use parser::parse_expr;
+use std::error::Error;
 use std::io::{self, Write};
 
 fn main() {
@@ -16,34 +17,21 @@ fn main() {
         io::stdout().flush().unwrap();
         let mut source = String::new();
         io::stdin().read_line(&mut source).unwrap();
-        eval(&source);
+        let output = match eval(&source) {
+            Ok(o) => o,
+            Err(e) => {
+                eprintln!("Error: {}", e);
+                continue;
+            }
+        };
+        println!("Output: {}", output);
     }
 }
 
-fn eval(source: &str) {
-    //let source = "(3 4 (+ 5.0) + 6) + (+ 2 + 3)";
-    let tokens = match lex(source) {
-        Ok(t) => t,
-        Err(e) => {
-            eprintln!("lexing error: {e:?}");
-            return;
-        }
-    };
+fn eval(source: &str) -> Result<Value, Box<dyn Error>> {
+    let tokens = lex(source)?;
     println!("Tokens: {:?}", tokens);
-    let ast = match parse_expr(&tokens, true) {
-        Ok(a) => a,
-        Err(e) => {
-            eprintln!("parsing error: {e:?}");
-            return;
-        }
-    };
+    let ast = parse_expr(&tokens, true)?;
     println!("Ast: {:?}", ast);
-    let output = match evaluate(&ast) {
-        Ok(o) => o,
-        Err(e) => {
-            eprintln!("parsing error: {e:?}");
-            return;
-        }
-    };
-    println!("Output: {}", output);
+    Ok(evaluate(&ast)?)
 }

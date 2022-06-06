@@ -113,6 +113,13 @@ impl ops::Neg for Scalar {
 pub struct EvalError;
 pub type EvalResult = Result<Value, EvalError>;
 
+impl fmt::Display for EvalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "eval error lol")
+    }
+}
+impl std::error::Error for EvalError {}
+
 pub fn evaluate(ast: &Ast) -> EvalResult {
     match ast {
         &Ast::Scalar(x) => Ok(Value::Num(x)),
