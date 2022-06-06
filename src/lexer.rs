@@ -24,7 +24,7 @@ impl fmt::Debug for Scalar {
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Operator {
     Plus,
     Minus,

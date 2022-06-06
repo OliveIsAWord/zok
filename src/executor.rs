@@ -40,7 +40,7 @@ impl fmt::Display for Value {
     }
 }
 
-fn to_float(s: Scalar) -> f64 {
+const fn to_float(s: Scalar) -> f64 {
     match s {
         Scalar::Int(i) => int_to_float(i),
         Scalar::Float(f) => f,
@@ -50,7 +50,7 @@ fn to_float(s: Scalar) -> f64 {
 /// A type safe way of converting the Zok int type to the Zok float type
 /// The precision loss is an intended feature; the ramifications are passed on to the end user.
 #[allow(clippy::cast_precision_loss)]
-fn int_to_float(x: i64) -> f64 {
+const fn int_to_float(x: i64) -> f64 {
     x as f64
 }
 
