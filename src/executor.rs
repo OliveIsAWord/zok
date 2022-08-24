@@ -143,7 +143,11 @@ fn evaluate_monad(op: Operator, val: Value) -> EvalResult {
     match op {
         Operator::Plus => todo!("transpose operation"),
         Operator::Minus => atomic_monad(|x| -x)(val),
-        Operator::Times => todo!("extract first"),
+        Operator::Times => Ok(match val {
+            // Get the first value of the array without cloning, or the empty array if there is none
+            Value::Array(a) => a.into_iter().next().unwrap_or(Value::Array(vec![])),
+            x => x,
+        }),
         Operator::ForwardSlash => atomic_monad(|x| Scalar::Float(to_float(x).sqrt()))(val),
     }
 }
