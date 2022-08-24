@@ -85,5 +85,8 @@ pub fn parse_expr(tokens: &[Token], unwrap_single: bool) -> Result<Ast, ParseErr
 }
 
 fn iter_with_rest(tokens: &[Token]) -> impl Iterator<Item = (&Token, &[Token])> {
-    (0..tokens.len()).map(|i| (&tokens[i], &tokens[i + 1..]))
+    tokens
+        .iter()
+        .enumerate()
+        .map(|(i, t)| (t, &tokens[i + 1..]))
 }
