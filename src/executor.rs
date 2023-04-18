@@ -9,6 +9,7 @@ pub enum Value {
 }
 
 impl Value {
+    // TODO: rewrite this without recursion
     fn print(&self, f: &mut fmt::Formatter<'_>, mut use_parens: bool) -> fmt::Result {
         match self {
             Self::Num(x) => write!(f, "{x:?}"),
@@ -119,6 +120,7 @@ impl fmt::Display for EvalError {
 impl std::error::Error for EvalError {}
 pub type EvalResult = Result<Value, EvalError>;
 
+// TODO: rewrite this without recursion
 pub fn evaluate(ast: &Ast) -> EvalResult {
     match ast {
         &Ast::Scalar(x) => Ok(Value::Num(x)),
@@ -161,6 +163,7 @@ fn evaluate_dyad(op: Operator, val1: Value, val2: Value) -> EvalResult {
     }
 }
 
+// TODO: rewrite this without recursion
 fn atomic_monad<F>(f: F) -> impl Fn(Value) -> EvalResult
 where
     F: Fn(Scalar) -> Scalar + Copy,
@@ -176,6 +179,7 @@ where
     }
 }
 
+// TODO: rewrite this without recursion
 fn atomic_dyad<F>(f: F) -> impl Fn(Value, Value) -> EvalResult
 where
     F: Fn(Scalar, Scalar) -> Scalar + Copy,
