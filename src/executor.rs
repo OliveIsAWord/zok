@@ -11,7 +11,7 @@ pub enum Value {
 impl Value {
     fn print(&self, f: &mut fmt::Formatter<'_>, mut use_parens: bool) -> fmt::Result {
         match self {
-            Self::Num(x) => write!(f, "{:?}", x),
+            Self::Num(x) => write!(f, "{x:?}"),
             Self::Array(xs) => {
                 if xs.len() < 2 {
                     use_parens = true;
@@ -146,7 +146,7 @@ fn evaluate_monad(op: Operator, val: Value) -> EvalResult {
         Operator::Times => Ok(match val {
             // Get the first value of the array without cloning, or the empty array if there is none
             Value::Array(a) => a.into_iter().next().unwrap_or(Value::Array(vec![])),
-            x => x,
+            x @ Value::Num(_) => x,
         }),
         Operator::ForwardSlash => atomic_monad(|x| Scalar::Float(to_float(x).sqrt()))(val),
     }

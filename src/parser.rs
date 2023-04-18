@@ -12,10 +12,10 @@ use std::fmt;
 impl fmt::Debug for Ast {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Scalar(v) => write!(f, "{:?}", v),
-            Self::Array(vals) => write!(f, "{:?}", vals),
-            Self::Monad(op, rhs) => write!(f, "M({:?} {:?})", op, rhs),
-            Self::Dyad(op, box (lhs, rhs)) => write!(f, "D({:?} {:?} {:?})", op, lhs, rhs),
+            Self::Scalar(v) => write!(f, "{v:?}"),
+            Self::Array(vals) => write!(f, "{vals:?}"),
+            Self::Monad(op, rhs) => write!(f, "M({op:?} {rhs:?})"),
+            Self::Dyad(op, box (lhs, rhs)) => write!(f, "D({op:?} {lhs:?} {rhs:?})"),
         }
     }
 }
@@ -33,7 +33,7 @@ impl fmt::Display for ParseError {
             Self::ExpectedToken => "unclosed parenthesis",
             Self::ExtraClosingBrace => "extra closed parenthesis",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
 impl std::error::Error for ParseError {}

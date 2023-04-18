@@ -20,18 +20,18 @@ fn main() {
         let output = match eval(&source) {
             Ok(o) => o,
             Err(e) => {
-                eprintln!("Error: {}", e);
+                eprintln!("Error: {e}");
                 continue;
             }
         };
-        println!("Output: {}", output);
+        println!("Output: {output}");
     }
 }
 
 fn eval(source: &str) -> Result<Value, Box<dyn Error>> {
     let tokens = lex(source)?;
-    println!("Tokens: {:?}", tokens);
+    println!("Tokens: {tokens:?}");
     let ast = parse_expr(&tokens, true)?;
-    println!("Ast: {:?}", ast);
+    println!("Ast: {ast:?}");
     Ok(evaluate(&ast)?)
 }

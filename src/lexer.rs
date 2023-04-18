@@ -18,8 +18,8 @@ pub enum Scalar {
 impl fmt::Debug for Scalar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Int(int) => write!(f, "{}", int),
-            Self::Float(float) => write!(f, "{:?}", float), // Debug printing forces a trailing ".0" for non-fractional float values
+            Self::Int(int) => write!(f, "{int}"),
+            Self::Float(float) => write!(f, "{float:?}"), // Debug printing forces a trailing ".0" for non-fractional float values
         }
     }
 }
@@ -56,7 +56,7 @@ impl fmt::Debug for Operator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (c, op) in OP_CHARS {
             if self == op {
-                return write!(f, "{}", c);
+                return write!(f, "{c}");
             }
         }
         unreachable!()
@@ -89,11 +89,11 @@ pub fn lex(mut src: &str) -> Result<Vec<Token>, LexError> {
             //dbg!(i);
             if let Some((tok, rest)) = lexer(src) {
                 if src.as_ptr() == rest.as_ptr() {
-                    eprintln!("Lexer {:?} succeeded but did not consume any characters from the front of the source str", i);
-                    eprintln!("token: {:?}", tok);
-                    eprintln!("source str: {:?}", src);
+                    eprintln!("Lexer {i:?} succeeded but did not consume any characters from the front of the source str");
+                    eprintln!("token: {tok:?}");
+                    eprintln!("source str: {src:?}");
                     if src != rest {
-                        eprintln!("rest str: {:?}", rest);
+                        eprintln!("rest str: {rest:?}");
                     }
                     unreachable!();
                 }
