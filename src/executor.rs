@@ -184,9 +184,7 @@ where
     move |val1, val2| match (val1, val2) {
         (Num(a), Num(b)) => Ok(Num(f(a, b))),
         (Array(xs), Array(ys)) => {
-            if xs.len() != ys.len() {
-                return Err(EvalError);
-            }
+            // the length of the output will be the length of the shorter input, thanks to `Iterator::zip`
             xs.into_iter()
                 .zip(ys.into_iter())
                 .map(|(a, b)| atomic_dyad(f)(a, b))
