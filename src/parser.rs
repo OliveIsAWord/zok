@@ -75,6 +75,7 @@ pub fn parse_expr(tokens: &[Token], unwrap_single: bool) -> Result<Ast, ParseErr
                 }
             }
             Token::CloseParen => return Err(ParseError::ExtraClosingBrace),
+            Token::OpenSquare | Token::CloseSquare => todo!(),
         }
     }
     match array.len() {

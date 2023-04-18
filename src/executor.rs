@@ -151,6 +151,16 @@ fn evaluate_monad(op: Operator, val: Value) -> EvalResult {
             x @ Value::Num(_) => x,
         }),
         Operator::ForwardSlash => atomic_monad(|x| Scalar::Float(to_float(x).sqrt()))(val),
+        Operator::Bang => match val {
+            Value::Num(Scalar::Int(i)) => {
+                let range = if i >= 0 { 0..i } else { i..0 };
+                Ok(Value::Array(
+                    range.map(Scalar::Int).map(Value::Num).collect(),
+                ))
+            }
+            Value::Num(Scalar::Float(_)) => => Err(EvalError),
+            _ => todo!("range on list"),
+        },
     }
 }
 
@@ -160,6 +170,7 @@ fn evaluate_dyad(op: Operator, val1: Value, val2: Value) -> EvalResult {
         Operator::Minus => atomic_dyad(|x, y| x - y)(val1, val2),
         Operator::Times => atomic_dyad(|x, y| x * y)(val1, val2),
         Operator::ForwardSlash => atomic_dyad(|x, y| x / y)(val1, val2),
+        Operator::Bang => todo!("bang dyad"),
     }
 }
 

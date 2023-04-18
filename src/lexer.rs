@@ -7,6 +7,8 @@ pub enum Token {
     Op(Operator),
     OpenParen,
     CloseParen,
+    OpenSquare,
+    CloseSquare,
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -30,6 +32,7 @@ pub enum Operator {
     Minus,
     Times,
     ForwardSlash,
+    Bang,
 }
 
 const OP_CHARS: &[(char, Operator)] = &[
@@ -37,6 +40,7 @@ const OP_CHARS: &[(char, Operator)] = &[
     ('-', Operator::Minus),
     ('*', Operator::Times),
     ('/', Operator::ForwardSlash),
+    ('!', Operator::Bang),
 ];
 
 #[derive(Debug)]
@@ -79,7 +83,14 @@ impl fmt::Display for LexError {
 impl std::error::Error for LexError {}
 
 pub fn lex(mut src: &str) -> Result<Vec<Token>, LexError> {
-    let lexers = [lex_open_paren, lex_close_paren, lex_operator, lex_num];
+    let lexers = [
+        lex_open_paren,
+        lex_close_paren,
+        lex_open_square,
+        lex_close_square,
+        lex_operator,
+        lex_num,
+    ];
     let mut tokens = vec![]; // vec![Token::Eof]
     src = src.trim_start();
     while !src.is_empty() {
@@ -127,6 +138,13 @@ fn lex_open_paren(src: &str) -> Option<(Token, &str)> {
 }
 fn lex_close_paren(src: &str) -> Option<(Token, &str)> {
     try_lex_pattern(')', Token::CloseParen, src)
+}
+
+fn lex_open_square(src: &str) -> Option<(Token, &str)> {
+    try_lex_pattern('[', Token::OpenSquare, src)
+}
+fn lex_close_square(src: &str) -> Option<(Token, &str)> {
+    try_lex_pattern(']', Token::CloseSquare, src)
 }
 
 fn lex_int(src: &str) -> Option<(Token, &str)> {
